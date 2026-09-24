@@ -1,15 +1,157 @@
 #root {
-  max-width: 960px;
+  max-width: 520px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: clamp(0.75rem, 3vh, 1.5rem) 1.25rem;
 }
 
 main {
   display: grid;
-  gap: 0.5rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+  align-items: end;
 }
 
-h1,
-p {
+h1 {
+  grid-column: 1 / -1;
+  justify-self: center;
   margin: 0;
+  color: #080d0b;
+  font-size: clamp(2.15rem, 9vw, 3.4rem);
+  font-weight: 700;
+  letter-spacing: -0.06em;
+  line-height: 0.9;
+  text-align: center;
+}
+
+p {
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin: 0.1rem 0 0.65rem;
+  color: #087d4a;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  line-height: 1.35;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+#currentScore,
+#hiScore {
+  color: #080d0b;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+#hiScore {
+  color: #087d4a;
+  text-align: right;
+}
+
+#game-map {
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin: 0.2rem 0 0.45rem;
+  border-radius: 12px;
+  background: #18db88;
+  padding: 8px;
+}
+
+.game-cell,
+.game-cell-background {
+  border-radius: 8px;
+}
+
+.game-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.game-cell--empty {
+  background: transparent;
+}
+
+.game-cell:not(.game-cell--empty) {
+  box-shadow: inset 0 0 0 2px rgb(8 13 11 / 14%);
+}
+
+.game-cell--merge-source {
+  pointer-events: none;
+}
+
+.game-cell-background {
+  background: #d4e1da;
+}
+
+button {
+  min-height: 2.5rem;
+  border: none;
+  border-radius: 999px;
+  padding: 0.75rem 1rem;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
+#undoButton {
+  color: #ffffff;
+  background: #080d0b;
+}
+
+#resetButton {
+  color: #ffffff;
+  background: #d92d20;
+}
+
+#undoButton:disabled {
+  color: #6c7772;
+  background: #dce5e1;
+  opacity: 1;
+}
+
+@keyframes new-cell {
+  from {
+    transform: scale(0);
+  }
+
+  to {
+    transform: scale(1);
+  }
+}
+
+.cell-2 { background: #ffffff; color: #080d0b; }
+.cell-4 { background: #75d8ad; color: #080d0b; }
+.cell-8 { background: #20bfc0; color: #062c30; }
+.cell-16 { background: #0d94b5; color: #ffffff; }
+.cell-32 { background: #1767c1; color: #ffffff; }
+.cell-64 { background: #123d9b; color: #ffffff; }
+.cell-128 { background: #080d0b; color: #18db88; }
+
+#game-map .cell-2,
+#game-map .cell-4,
+#game-map .cell-8,
+#game-map .cell-16,
+#game-map .cell-32,
+#game-map .cell-64,
+#game-map .cell-128 {
+  font-size: clamp(1.05rem, 6vw, 2.6rem);
+  font-weight: 700;
+  letter-spacing: -0.08em;
 }

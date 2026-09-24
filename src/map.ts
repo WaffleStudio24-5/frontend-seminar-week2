@@ -1,7 +1,9 @@
 type CellState = "normal" | "merged" | "new";
+export type Position = { x: number; y: number };
 type CellObject = {
   state: CellState;
-  value: number
+  value: number;
+  prevPositions: Position[];
 };
 export type Cell = CellObject | null;
 export type Map2048 = Cell[][];
@@ -27,11 +29,62 @@ export const moveMapIn2048Rule = (
 
   const { result, isMoved, score } = moveLeft(rotatedMap);
 
+  const revertDegree = revertDegreeMap[direction];
+  const resultInOriginalOrientation = rotateMapCounterClockwise(result, revertDegree);
+
   return {
-    result: rotateMapCounterClockwise(result, revertDegreeMap[direction]),
+    result: restorePreviousPositions(
+      resultInOriginalOrientation,
+      result,
+      revertDegree,
+    ),
     isMoved,
     score
   };
+};
+
+const restorePreviousPositions = (
+  map: Map2048,
+  previousOrientationMap: Map2048,
+  degree: RotateDegree,
+): Map2048 =>
+  map.map((row) =>
+    row.map((cell) =>
+      cell === null
+        ? null
+        : {
+            ...cell,
+            prevPositions: cell.prevPositions.map((position) =>
+              rotatePositionCounterClockwise(
+                position,
+                degree,
+                previousOrientationMap.length,
+                previousOrientationMap[0].length,
+              ),
+            ),
+          },
+    ),
+  );
+
+const rotatePositionCounterClockwise = (
+  position: Position,
+  degree: RotateDegree,
+  rowLength: number,
+  columnLength: number,
+): Position => {
+  switch (degree) {
+    case 0:
+      return position;
+    case 90:
+      return { x: position.y, y: columnLength - position.x - 1 };
+    case 180:
+      return {
+        x: columnLength - position.x - 1,
+        y: rowLength - position.y - 1,
+      };
+    case 270:
+      return { x: rowLength - position.y - 1, y: position.x };
+  }
 };
 
 const validateMapIsNByM = (map: Map2048) => {
@@ -75,7 +128,7 @@ const rotateMapCounterClockwise = (
 };
 
 const moveLeft = (map: Map2048): MoveResult => {
-  const movedRows = map.map(moveRowLeft);
+  const movedRows = map.map((row, rowIndex) => moveRowLeft(row, rowIndex));
   const result = movedRows.map((movedRow) => movedRow.result);
   const isMoved = movedRows.some((movedRow) => movedRow.isMoved);
   const score = movedRows.reduce(
@@ -85,32 +138,40 @@ const moveLeft = (map: Map2048): MoveResult => {
   return { result, isMoved, score };
 };
 
-const moveRowLeft = (row: Cell[]): { result: Cell[]; isMoved: boolean, score: number } => {
-  const reduced = row.reduce(
-    (acc: { lastCell: Cell; result: Cell[], score: number }, cell) => {
-      if (cell === null) {
-        return acc;
-      }
-      if (acc.lastCell === null) {
-        return { ...acc, lastCell: cell };
-      }
-      if (acc.lastCell.value === cell.value) {
-        const mergedCell: Cell = {
-          state: 'merged',
-          value: cell.value * 2,
-        };
-        return { result: [...acc.result, mergedCell], lastCell: null, score: acc.score + mergedCell.value };
-      } else {
-        const normalCell: Cell = { ...acc.lastCell, state: 'normal' };
-        return { result: [...acc.result, normalCell], lastCell: cell, score: acc.score };
-      }
-    },
-    { lastCell: null, result: [], score: 0 }
+const moveRowLeft = (
+  row: Cell[],
+  rowIndex: number,
+): { result: Cell[]; isMoved: boolean; score: number } => {
+  const cellsWithPositions = row.flatMap((cell, columnIndex) =>
+    cell === null ? [] : [{ cell, columnIndex }],
   );
-  
-  const finalResult: Cell[] = [...reduced.result];
-  if (reduced.lastCell) {
-    finalResult.push({ ...reduced.lastCell, state: 'normal' });
+  const finalResult: Cell[] = [];
+  let score = 0;
+
+  for (let index = 0; index < cellsWithPositions.length; index += 1) {
+    const current = cellsWithPositions[index];
+    const next = cellsWithPositions[index + 1];
+
+    if (next && current.cell.value === next.cell.value) {
+      const mergedCell: Cell = {
+        state: "merged",
+        value: current.cell.value * 2,
+        prevPositions: [
+          { x: current.columnIndex, y: rowIndex },
+          { x: next.columnIndex, y: rowIndex },
+        ],
+      };
+      finalResult.push(mergedCell);
+      score += mergedCell.value;
+      index += 1;
+      continue;
+    }
+
+    finalResult.push({
+      state: "normal",
+      value: current.cell.value,
+      prevPositions: [{ x: current.columnIndex, y: rowIndex }],
+    });
   }
 
   const resultRow = Array.from(
@@ -125,7 +186,7 @@ const moveRowLeft = (row: Cell[]): { result: Cell[]; isMoved: boolean, score: nu
   return {
     result: resultRow,
     isMoved,
-    score: reduced.score
+    score
   };
 };
 
@@ -155,7 +216,8 @@ export function initializeMap(): Map2048 {
   const randomInt1 = getRandomInt(16);
   map2048[Math.floor(randomInt1 / 4)][randomInt1 % 4] = {
     state: "new",
-    value: 2
+    value: 2,
+    prevPositions: [],
   };
   
   let randomInt2 = getRandomInt(16);
@@ -164,7 +226,8 @@ export function initializeMap(): Map2048 {
   }
   map2048[Math.floor(randomInt2 / 4)][randomInt2 % 4] = {
     state: "new",
-    value: 2
+    value: 2,
+    prevPositions: [],
   };
 
   return map2048;
@@ -188,7 +251,7 @@ export function addNewCell(map2048: Map2048): Map2048 {
   return map2048.with(
     i,
     map2048[i].with(
-      j, {state: "new", value: randomInt1}
+      j, { state: "new", value: randomInt1, prevPositions: [] }
     )
   );
 }
@@ -217,10 +280,10 @@ export function userLoses(map2048: Map2048): boolean {
   for (let i = 0; i < 4; i++) {
     for (let j = 0; j < 4; j++) {
       const currentCell = map2048[i][j];
-      if (j < 3 && currentCell === map2048[i][j + 1]) {
+      if (j < 3 && currentCell?.value === map2048[i][j + 1]?.value) {
         return false;
       }
-      if (i < 3 && currentCell === map2048[i + 1][j]) {
+      if (i < 3 && currentCell?.value === map2048[i + 1][j]?.value) {
         return false;
       }
     }
