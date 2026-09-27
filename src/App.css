@@ -13,3 +13,83 @@ h1,
 p {
   margin: 0;
 }
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #faf8ef;
+}
+
+main {
+  width: 420px;
+  margin: 50px auto;
+}
+
+h1 {
+  font-size: 64px;
+  margin-bottom: 20px;
+}
+
+.board {
+  display: grid;
+  width: 320px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  padding: 10px;
+  background: #bbada0;
+  border-radius: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.tile {
+  aspect-ratio: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 6px;
+  background: #cdc1b4;
+  font-size: 28px;
+  font-weight: bold;
+  min-width: 0;
+}
+
+.tile-0 {
+  background: #cdc1b4;
+}
+
+.tile-2 {
+  background: #eee4da;
+  color: #776e65;
+}
+
+.tile-4 {
+  background: #ede0c8;
+  color: #776e65;
+}
+
+.tile-8 {
+  background: #f2b179;
+  color: white;
+}
+
+.tile-16 {
+  background: #f59563;
+  color: white;
+}
+
+.tile-32 {
+  background: #f67c5f;
+  color: white;
+}
+
+.tile-64 {
+  background: #f65e3b;
+  color: white;
+}
+
+.tile-128 {
+  background: #edcf72;
+  color: white;
+  font-size: 24px;
+}
